@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDate } from '$lib/blog';
+	import { formatDate } from '$lib/writing.js';
 
 	const { data } = $props();
 </script>
@@ -21,7 +21,7 @@
 
 		{#each data.posts as { title, slug, datePublished, dateUpdated }}
 			<div class="text-lg font-semibold tracking-tight">
-				<a href={`/${slug}`} class="hover:underline">{title}</a>
+				<a href={`/writing/${slug}`} class="hover:underline">{title}</a>
 			</div>
 			<div class="hidden md:flex">{formatDate(datePublished)}</div>
 			<div class="hidden md:flex">

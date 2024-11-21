@@ -1,10 +1,10 @@
 import type { PageServerLoad } from './$types';
-import { getBlogPosts } from '$lib/blog';
+import { getPosts } from '$lib/writing';
 
 export const prerender = true;
 
 export const load: PageServerLoad = async () => {
-	const posts = await getBlogPosts();
+	const posts = await getPosts();
 
 	return { posts };
 };

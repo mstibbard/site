@@ -1,13 +1,13 @@
 import type { EntryGenerator, PageLoad } from './$types';
 import type { MdFile } from '$lib/types';
 import { error } from '@sveltejs/kit';
-import { getBlogPosts } from '$lib/blog';
+import { getPosts } from '$lib/writing';
 
 export const prerender = true;
 
 export const load: PageLoad = async ({ params }) => {
 	try {
-		const post: MdFile = await import(`$content/blog/${params.slug}.md`);
+		const post: MdFile = await import(`$content/writing/${params.slug}.md`);
 
 		if (!post) {
 			error(404, `Could not find ${params.slug}`);
@@ -30,8 +30,8 @@ export const load: PageLoad = async ({ params }) => {
 
 export const entries: EntryGenerator = async () => {
 	// eslint-disable-next-line no-console
-	console.log('Prerendering /blog/[slug]');
-	const posts = await getBlogPosts();
+	console.log('Prerendering /writing/[slug]');
+	const posts = await getPosts();
 	const entries = posts.map((post) => ({ slug: post.slug }));
 	// eslint-disable-next-line no-console
 	console.dir(entries, { colors: true });

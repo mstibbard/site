@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDate } from '$lib/blog';
+	import { formatDate } from '$lib/writing.js';
 
 	const { data } = $props();
 	const { meta, content: ContentComponent } = data;

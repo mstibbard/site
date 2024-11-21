@@ -10,7 +10,7 @@ export type FrontMatter = {
 	datePublished: string;
 	dateUpdated?: string;
 };
-export type BlogPost = Prettify<
+export type Post = Prettify<
 	FrontMatter & {
 		slug: string;
 	}

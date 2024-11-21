@@ -1,11 +1,11 @@
-import type { BlogPost } from '$lib/types';
-import { getBlogPosts } from '$lib/blog';
+import type { Post } from '$lib/types';
+import { getPosts } from '$lib/writing';
 import { siteConfig } from '$lib/config';
 
 export const prerender = true;
 
 export const GET = async () => {
-	const blogPosts: BlogPost[] = await getBlogPosts();
+	const posts: Post[] = await getPosts();
 
 	const headers = { 'Content-Type': 'application/xml' };
 
@@ -16,14 +16,14 @@ export const GET = async () => {
 				<description>${siteConfig.description}</description>
 				<link>${siteConfig.url}</link>
 				<atom:link href="${siteConfig.url}/rss.xml" rel="self" type="application/rss+xml"/>
-				${blogPosts
+				${posts
 					.map(
 						(post) => `
 						<item>
 							<title>${post.title}</title>
 							<description>${post.description}</description>
-							<link>${siteConfig.url}/${post.slug}</link>
-							<guid isPermaLink="true">${siteConfig.url}/${post.slug}</guid>
+							<link>${siteConfig.url}/writing/${post.slug}</link>
+							<guid isPermaLink="true">${siteConfig.url}/writing/${post.slug}</guid>
 							<pubDate>${new Date(post.datePublished).toUTCString()}</pubDate>
 						</item>
 					`

@@ -1,22 +1,24 @@
-import type { BlogPost } from './types';
+import type { Post } from './types';
 
 /**
- * Retrieves the Front Matter + slug for each "published" .md file in /src/content/blog.
+ * Retrieves the Front Matter + slug for each "published" .md file in /src/content/writing.
  *
  * By default the response is sorted in descending order on "date".
  */
-export async function getBlogPosts(sortOrder: 'asc' | 'desc' = 'desc') {
-	let posts: BlogPost[] = [];
+export async function getPosts(sortOrder: 'asc' | 'desc' = 'desc') {
+	let posts: Post[] = [];
 
-	const paths = import.meta.glob('/src/content/blog/*.md', { eager: true });
+	const paths = import.meta.glob('/src/content/writing/*.md', {
+		eager: true
+	});
 
 	for (const path in paths) {
 		const file = paths[path];
 		const slug = path.split('/').at(-1)?.replace('.md', '');
 
 		if (file && typeof file === 'object' && 'metadata' in file && slug) {
-			const metadata = file.metadata as Omit<BlogPost, 'slug'>;
-			const post = { ...metadata, slug } satisfies BlogPost;
+			const metadata = file.metadata as Omit<Post, 'slug'>;
+			const post = { ...metadata, slug } satisfies Post;
 			posts.push(post);
 		}
 	}
@@ -31,12 +33,12 @@ export async function getBlogPosts(sortOrder: 'asc' | 'desc' = 'desc') {
 }
 
 /**
- * Produces an array containing the slug for each "published" .md file in /src/content/blog.
+ * Produces an array containing the slug for each "published" .md file in /src/content/writing.
  *
  * By default the response is sorted in descending order on "date".
  */
-export async function getBlogPostsSlugList(sortOrder: 'asc' | 'desc' = 'desc') {
-	const posts: BlogPost[] = await getBlogPosts(sortOrder);
+export async function getPostsSlugList(sortOrder: 'asc' | 'desc' = 'desc') {
+	const posts: Post[] = await getPosts(sortOrder);
 	const slugs = posts.map((item) => item.slug);
 	return slugs;
 }
