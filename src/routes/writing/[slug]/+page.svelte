@@ -23,7 +23,7 @@
 	</hgroup>
 
 	<div
-		class="prose-lg py-12 text-justify prose-a:text-blue-500 hover:prose-a:underline prose-blockquote:mx-auto prose-blockquote:max-w-lg prose-blockquote:text-center prose-blockquote:italic prose-pre:bg-[#1E1E1E] prose-pre:text-[#D4D4D4] prose-ol:list-decimal prose-ul:list-disc"
+		class="prose-lg prose-a:text-blue-500 prose-a:hover:underline prose-blockquote:mx-auto prose-blockquote:max-w-lg prose-blockquote:text-center prose-blockquote:italic prose-pre:bg-[#1E1E1E] prose-pre:text-[#D4D4D4] prose-ol:list-decimal prose-ul:list-disc py-12 text-justify"
 	>
 		<ContentComponent />
 	</div>

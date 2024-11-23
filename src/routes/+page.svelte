@@ -14,7 +14,7 @@
 </section>
 
 <section class="my-8">
-	<div class="grid grid-cols-1 gap-x-2 gap-y-4 text-gray-700 md:grid-cols-[6fr,1fr,1fr]">
+	<div class="grid grid-cols-1 gap-x-2 gap-y-4 text-gray-700 md:grid-cols-[6fr_1fr_1fr]">
 		<div class="text-sm font-semibold">Title</div>
 		<div class="hidden text-sm font-semibold md:flex">Published</div>
 		<div class="hidden text-sm font-semibold md:flex">Updated</div>
