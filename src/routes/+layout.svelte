@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { page } from '$app/stores';
 	import { siteConfig } from '$lib/config';
 	import '../app.css';
@@ -28,6 +29,9 @@
 	<meta name="twitter:creator" content={siteConfig.twitterHandle} />
 	<meta property="twitter:url" content={`${$page.url}`} />
 	<link rel="canonical" href={`${$page.url}`} />
+	{#if !dev}
+		<script defer data-domain="stibbard.io" src="https://plausible.io/js/plausible.js"></script>
+	{/if}
 </svelte:head>
 
 <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
