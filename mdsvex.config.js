@@ -37,7 +37,11 @@ const config = {
 				'typescript',
 				'yaml'
 			);
-			const html = escapeSvelte(highlighter.codeToHtml(code, { lang, theme: 'dark-plus' }));
+			let html = escapeSvelte(highlighter.codeToHtml(code, { lang, theme: 'dark-plus' }));
+			html = html.replace(
+				/&#123;&#123;&#123;([^&}]+)&#125;&#125;&#125;/g,
+				(_, variable) => `\${${variable}}`
+			);
 			return `{@html \`${html}\` }`;
 		}
 	}

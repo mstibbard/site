@@ -6,14 +6,9 @@ dateUpdated: '2024-02-02'
 ---
 
 <script>
-  const yellow = "color:#DCDCAA";
-  const blue = "color:#569CD6";
-  const green = "color:#6A9955";
-  const orange = "color:#CE9178";
-  const purple = "color:#C586C0";
-  const teal = "color:#4EC9B0";
-
   $: productName = 'insight';
+  $: productNameHumanized = humanize(productName);
+  $: productNameHyphenized = hyphenize(productName);
   $: projectID = `${hyphenize(productName)}-098765`;
   $: billingID = '000000-000000-000000';
   $: region = 'australia-southeast1';
@@ -79,12 +74,13 @@ If you don't have an app ready to go but want to following along, I suggest gene
 <label for="productName">⭐ INPUT your product name:</label>
 <input type="text" id="productName" bind:value={productName} />
 
-<pre><code><span style={yellow}>mix</span> <span style={orange}>{productName}</span>
-<span style={yellow}>cd</span> <span style={orange}>{productName}</span>
-<span style={green}># create something for us to test DB interaction with e.g.,</span>
-<span style={yellow}>mix</span> <span style={orange}>phx.gen.live Products Product products name brand</span>
-<span style={green}># remember to update lib/{productName}_web/router.ex</span>
-</code></pre>
+```shell
+mix {{{productName}}}
+cd {{{productName}}}
+# create something for us to test DB interaction with e.g.,
+mix phx.gen.live Products Product products name brand
+# remember to update lib/{{{productName}}}_web/router.ex
+```
 
 In your existing app (or newly generated app), generate a Dockerfile and other useful release helpers with the following command
 
@@ -94,25 +90,32 @@ mix phx.gen.release --docker
 
 Next we update our runtime config to delete the production database environment variables because we will leverage [PostgreSQL environment variables](https://www.postgresql.org/docs/current/libpq-envars.htm) (e.g., `PGHOST`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`), which is conveniently what `Postgrex.start_link/1` [defaults to under the hood](https://hexdocs.pm/postgrex/Postgrex.html#start_link/1) if you do not specify database connection details in your code.
 
-<pre><code><span style={green}># config/runtime.exs</span>
+```elixir
+# config/runtime.exs
 ...
-<span style={purple}>if</span><span style={yellow}> config_env</span>() == :prod <span style={purple}>do</span>
-<span style={green}>  # removed database_url block</span><br/>
-  maybe_ipv6 = <span style={purple}>if</span><span style={teal}> System</span>.<span style={yellow}>get_env</span>(<span style={orange}>"ECTO_IPV6"</span>) in <span style={orange}>~w(true 1)</span>, do: [:inet6], else: []<br/>
-  config :{productName}, <span style={teal}>{humanize(productName)}</span>.<span style={teal}>Repo</span>,
-<span style={green}>    # removed url: database_url</span>
-    pool_size: <span style={teal}>String</span>.<span style={yellow}>to_integer</span>(<span style={teal}>System</span>.<span style={yellow}>get_env</span>(<span style={orange}>"POOL_SIZE"</span>) || <span style={orange}>"10"</span>),
-    socket_options: maybe_ipv6<br/>
-<span style={green}>  # nothing changed beyond this</span>
-...</code></pre>
+if config_env() == :prod do
+  # removed database_url block
+
+  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+
+  config :{{{productName}}}, {{{productNameHumanized}}}.Repo,
+    # removed url: database_url
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    socket_options: maybe_ipv6
+
+  # nothing changed beyond this
+...
+```
 
 Cloud Run will automatically generate a semi randomised URL for your app once deployed. It will be in the form of `https://[SERVICE NAME]-[RANDOM NUMBERS].a.run.app`. To prevent infinite reloading behaviour in LiveView we need to update `config/prod.exs` to allow-list the Cloud Run origin.
 
-<pre><code><span style={green}># config/prod.exs</span>
-config :{productName}, <span style={teal}>{humanize(productName)}</span>.<span style={teal}>Endpoint</span>,
-  cache_static_manifest: <span style={orange}>"priv/static/cache_manifest.json"</span>,
-  check_origin: [<span style={orange}>"https://*.run.app"</span>] <span style={green}># add this</span>
-</code></pre>
+```elixir
+# config/prod.exs
+config :{{{productName}}}, {{{productNameHumanized}}}.Endpoint,
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  check_origin: ["https://*.run.app"] # add this
+
+```
 
 ## 2. Create a GCP project
 
@@ -121,15 +124,19 @@ Create a new project with the name of your product/service. Please note that pro
 <label for="projectID">⭐ INPUT your GCP Project ID:</label>
 <input type="text" id="projectID" bind:value={projectID} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> projects create {projectID}</span></code></pre>
+```shell
+gcloud projects create {{{projectID}}}
+```
 
 Set the Google Cloud CLI to use the newly created project.
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> config set project {projectID}</span></code></pre>
+```shell
+gcloud config set project {{{projectID}}}
+```
 
 Find the billing account you set up (refer to prerequisites).
 
-```sh
+```shell
 gcloud billing accounts list
 ```
 
@@ -138,8 +145,10 @@ Link the billing account to the new project.
 <label for="billingID">⭐ INPUT your Billing ID:</label>
 <input type="text" id="billingID" bind:value={billingID} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> billing projects link {projectID} \</span>
-  <span style={blue}>--billing-account</span> <span style={orange}>{billingID}</span></code></pre>
+```shell
+gcloud billing projects link {{{projectID}}} \
+  --billing-account {{{billingID}}}
+```
 
 ## 3. Enable the services we need
 
@@ -147,7 +156,7 @@ Google Cloud disables all cloud products/services on a new project by default so
 
 The following command will enable all the services we need.
 
-```sh
+```shell
 gcloud services enable \\
   artifactregistry.googleapis.com \\
   cloudbuild.googleapis.com \\
@@ -164,15 +173,19 @@ Create a new repository with an identifier (I generally align this with my elixi
 <label for="region">⭐ INPUT your desired GCP Region:</label>
 <input type="text" id="region" bind:value={region} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> artifacts repositories create {hyphenize(productName)} \</span>
-  <span style={blue}>--repository-format=docker</span><span style={orange}> \</span>
-  <span style={blue}>--location={region}</span><span style={orange}> \</span>
-  <span style={blue}>--description="{productName} application"</span></code></pre>
+```shell
+gcloud artifacts repositories create {{{productNameHyphenized}}} \\
+  --repository-format=docker \\
+  --location={{{region}}} \\
+  --description="{{{productName}}} application"
+```
 
 Once that is created we need to retrieve the repository's `Registry URL` with the following command:
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> artifacts repositories describe {hyphenize(productName)} \</span>
-  <span style={blue}>--location</span><span style={orange}> {region}</span></code></pre>
+```shell
+gcloud artifacts repositories describe {{{productNameHyphenized}}} \\
+  --location {{{region}}}
+```
 
 It will look something like `REGION-docker.pkg.dev/PROJECT-NAME/REPOSITORY-NAME`.
 
@@ -195,8 +208,10 @@ Create the service account with a useful identifier.
 <label for="serviceAccount">⭐ INPUT your desired Service Account name:</label>
 <input type="text" id="serviceAccount" bind:value={serviceAccount} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> iam service-accounts create {serviceAccount} \</span>
-  <span style={blue}>--description="{productName} app service account"</span></code></pre>
+```shell
+gcloud iam service-accounts create {{{serviceAccount}}} \\
+  --description="{{{productName}}} app service account"
+```
 
 Service accounts are referenced using a fully qualified email address, not just a name. To retrieve the full email address for the service account we just created run:
 
@@ -219,30 +234,31 @@ We will also provide some IAM permissions to the Service Account that will be ne
 
 Above can be added with the following commands:
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> projects add-iam-policy-binding {projectID} \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/logging.logWriter"</span><span style={orange}> \</span>
-  <span style={blue}>--condition None</span>
+```shell
+gcloud projects add-iam-policy-binding {{{projectID}}} \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/logging.logWriter" \\
+  --condition None
 
-<span style={yellow}>gcloud</span><span style={orange}> projects add-iam-policy-binding {projectID} \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/cloudsql.client"</span><span style={orange}> \</span>
-  <span style={blue}>--condition None</span>
+gcloud projects add-iam-policy-binding {{{projectID}}} \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/cloudsql.client" \\
+  --condition None
 
-<span style={yellow}>gcloud</span><span style={orange}> projects add-iam-policy-binding {projectID} \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/artifactregistry.writer"</span><span style={orange}> \</span>
-  <span style={blue}>--condition None</span>
+gcloud projects add-iam-policy-binding {{{projectID}}} \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/artifactregistry.writer" \\
+  --condition None
 
-<span style={yellow}>gcloud</span><span style={orange}> projects add-iam-policy-binding {projectID} \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/run.developer"</span><span style={orange}> \</span>
-  <span style={blue}>--condition None</span>
+gcloud projects add-iam-policy-binding {{{projectID}}} \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/run.developer" \\
+  --condition None
 
-<span style={yellow}>gcloud</span><span style={orange}> iam service-accounts add-iam-policy-binding "{serviceAccountEmail}" \</span>
-  <span style={blue}>--member</span><span style={orange}> "serviceAccount:{serviceAccountEmail}" \</span>
-  <span style={blue}>--role</span><span style={orange}> "roles/iam.serviceAccountUser" \</span>
-</code></pre>
+gcloud iam service-accounts add-iam-policy-binding "{{{serviceAccountEmail}}}" \\
+  --member "serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role "roles/iam.serviceAccountUser"
+```
 
 ## 6. Create a Cloud SQL database instance
 
@@ -251,10 +267,12 @@ Create a new PostgreSQL instance specifying your desired region, type of DB, and
 <label for="instanceName">⭐ INPUT your desired database instance name:</label>
 <input type="text" id="instanceName" bind:value={instanceName} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> sql instances create {instanceName} \</span>
-  <span style={blue}>--region={region}</span><span style={orange}> \</span>
-  <span style={blue}>--database-version=POSTGRES_14</span><span style={orange}> \</span>
-  <span style={blue}>--tier=db-f1-micro</span></code></pre>
+```shell
+gcloud sql instances create {{{instanceName}}} \\
+  --region={{{region}}} \\
+  --database-version=POSTGRES_14 \\
+  --tier=db-f1-micro
+```
 
 Now we will create a user for our application to use when interacting with the database.
 
@@ -264,22 +282,28 @@ Now we will create a user for our application to use when interacting with the d
 <label for="dbUserPassword">⭐ INPUT your desired database user's password:</label>
 <input type="text" id="dbUserPassword" bind:value={dbUserPassword} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> sql users create {dbUser} \</span>
-  <span style={blue}>--instance={instanceName}</span><span style={orange}> \</span>
-  <span style={blue}>--password={dbUserPassword}</span></code></pre>
+```shell
+gcloud sql users create {{{dbUser}}} \\
+  --instance={{{instanceName}}} \\
+  --password={{{dbUserPassword}}}
+```
 
 Next we will create our database.
 
 <label for="dbName">⭐ INPUT your desired database name:</label>
 <input type="text" id="dbName" bind:value={dbName} />
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> sql databases create {dbName} \</span>
-  <span style={blue}>--instance</span><span style={orange}> {instanceName}</span></code></pre>
+```shell
+gcloud sql databases create {{{dbName}}} \\
+  --instance {{{instanceName}}}
+```
 
 We also need to retrieve our instance `connectionName` for later:
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> sql instances describe {instanceName} \</span>
-  <span style={blue}>--format='value(connectionName)'</span></code></pre>
+```shell
+gcloud sql instances describe {{{instanceName}}} \\
+  --format='value(connectionName)'
+```
 
 The connection name will look something like `PROJECT:REGION:INSTANCE-NAME`.
 
@@ -303,7 +327,7 @@ Create each of these txt files and populate with your relevant secrets:
 
 Once the txt files are created, run each of the following commands to create the secrets:
 
-```sh
+```shell
 # string payload, pipe the secret value into the gcloud command
 mix phx.gen.secret | gcloud secrets create DEV_SECRET_KEY_BASE --data-file=-
 
@@ -325,22 +349,23 @@ Notes:
 
 Next we need to provide the Service Account with permission to access all of these secrets.
 
-<pre><code><span style={yellow}>gcloud</span><span style={orange}> secrets add-iam-policy-binding DEV_SECRET_KEY_BASE \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/secretmanager.secretAccessor"</span>
+```shell
+gcloud secrets add-iam-policy-binding DEV_SECRET_KEY_BASE \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/secretmanager.secretAccessor"
 
-<span style={yellow}>gcloud</span><span style={orange}> secrets add-iam-policy-binding DB_USER \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/secretmanager.secretAccessor"</span>
+gcloud secrets add-iam-policy-binding DB_USER \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/secretmanager.secretAccessor"
 
-<span style={yellow}>gcloud</span><span style={orange}> secrets add-iam-policy-binding DB_PASS \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/secretmanager.secretAccessor"</span>
+gcloud secrets add-iam-policy-binding DB_PASS \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/secretmanager.secretAccessor"
 
-<span style={yellow}>gcloud</span><span style={orange}> secrets add-iam-policy-binding DB_HOST \</span>
-  <span style={blue}>--member="serviceAccount:{serviceAccountEmail}"</span><span style={orange}> \</span>
-  <span style={blue}>--role="roles/secretmanager.secretAccessor"</span>
-</code></pre>
+gcloud secrets add-iam-policy-binding DB_HOST \\
+  --member="serviceAccount:{{{serviceAccountEmail}}}" \\
+  --role="roles/secretmanager.secretAccessor"
+```
 
 We also need to retrieve the paths for the `DB_USER` and `DB_PASS` for use later:
 
@@ -391,85 +416,86 @@ In your Phoenix project's root directory create a `cloudbuild.yaml` file and pop
 <label for="serviceName">⭐ INPUT your desired Cloud Run service name:</label>
 <input type="text" id="serviceName" bind:value={serviceName} />
 
-<pre><code><span style={blue}>steps</span>:
-- <span style={blue}>name</span>:<span style={orange}> 'gcr.io/cloud-builders/docker'</span>
-  <span style={blue}>id</span>:<span style={orange}> Build and Push Docker Image</span>
-  <span style={blue}>script</span>:<span style={purple}> |</span>
-    <span style={orange}>docker build -t $&#123;_IMAGE_NAME&#125;:latest .</span>
-    <span style={orange}>docker push $&#123;_IMAGE_NAME&#125;:latest</span>
+```yaml
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build and Push Docker Image
+  script: |
+    docker build -t ${_IMAGE_NAME}:latest .
+    docker push ${_IMAGE_NAME}:latest
 
-- <span style={blue}>name</span>:<span style={orange}> 'gcr.io/cloud-builders/docker'</span>
-  <span style={blue}>id</span>:<span style={orange}> Start Cloud SQL Proxy to Postgres</span>
-  <span style={blue}>args</span>: [
-      <span style={orange}>'run'</span>,
-      <span style={orange}>'-d'</span>,
-      <span style={orange}>'--name'</span>,
-      <span style={orange}>'cloudsql'</span>,
-      <span style={orange}>'-p'</span>,
-      <span style={orange}>'5432:5432'</span>,
-      <span style={orange}>'--network'</span>,
-      <span style={orange}>'cloudbuild'</span>,
-      <span style={orange}>'gcr.io/cloud-sql-connectors/cloud-sql-proxy'</span>,
-      <span style={orange}>'--address'</span>,
-      <span style={orange}>'0.0.0.0'</span>,
-      <span style={orange}>'$&#123;_INSTANCE_CONNECTION_NAME&#125;'</span>
+- name: 'gcr.io/cloud-builders/docker'
+  id: Start Cloud SQL Proxy to Postgres
+  args: [
+      'run',
+      '-d',
+      '--name',
+      'cloudsql',
+      '-p',
+      '5432:5432',
+      '--network',
+      'cloudbuild',
+      'gcr.io/cloud-sql-connectors/cloud-sql-proxy',
+      '--address',
+      '0.0.0.0',
+      '${_INSTANCE_CONNECTION_NAME}'
     ]
 
-- <span style={blue}>name</span>:<span style={orange}> 'postgres'</span>
-  <span style={blue}>id</span>:<span style={orange}> Wait for Cloud SQL Proxy to be available</span>
-  <span style={blue}>script</span>:<span style={purple}> |</span>
-    <span style={orange}>until pg_isready -h cloudsql ; do sleep 1; done</span>
+- name: 'postgres'
+  id: Wait for Cloud SQL Proxy to be available
+  script: |
+    until pg_isready -h cloudsql ; do sleep 1; done
 
-- <span style={blue}>name</span>:<span style={orange}> $&#123;_IMAGE_NAME&#125;:latest</span>
-  <span style={blue}>id</span>:<span style={orange}> Run migrations</span>
-  <span style={blue}>env</span>:
-  - <span style={orange}>MIX_ENV=prod</span>
-  - <span style={orange}>SECRET_KEY_BASE=fake-key</span>
-  - <span style={orange}>PGHOST=cloudsql</span>
-  - <span style={orange}>PGDATABASE=$&#123;_DATABASE_NAME&#125;</span>
-  <span style={blue}>secretEnv</span>:
-  - <span style={orange}>PGUSER</span>
-  - <span style={orange}>PGPASSWORD</span>
-  <span style={blue}>script</span>:<span style={purple}> |</span>
-    <span style={orange}>/app/bin/{productName} eval "{humanize(productName)}.Release.migrate"</span>
+- name: ${_IMAGE_NAME}:latest
+  id: Run migrations
+  env:
+  - MIX_ENV=prod
+  - SECRET_KEY_BASE=fake-key
+  - PGHOST=cloudsql
+  - PGDATABASE=${_DATABASE_NAME}
+  secretEnv:
+  - PGUSER
+  - PGPASSWORD
+  script: |
+    /app/bin/{{{productName}}} eval "{{{productNameHumanized}}}.Release.migrate"
 
-- <span style={blue}>name</span>:<span style={orange}> 'gcr.io/cloud-builders/gcloud'</span>
-  <span style={blue}>id</span>:<span style={orange}> Deploy to Cloud Run</span>
-  <span style={blue}>script</span>:<span style={purple}> |</span>
-    <span style={orange}>gcloud run deploy $&#123;_SERVICE_NAME&#125; \
-      --image $&#123;_IMAGE_NAME&#125;:latest \
-      --region $&#123;LOCATION&#125; \
-      --platform managed \
-      --allow-unauthenticated \
-      --set-secrets=SECRET_KEY_BASE=DEV_SECRET_KEY_BASE:latest \
-      --set-secrets=PGHOST=DB_HOST:latest \
-      --set-secrets=PGUSER=DB_USER:latest \
-      --set-secrets=PGPASSWORD=DB_PASS:latest \
-      --set-env-vars=PGDATABASE=$&#123;_DATABASE_NAME&#125; \
-      --add-cloudsql-instances=$&#123;_INSTANCE_CONNECTION_NAME&#125; \
-      --service-account=$&#123;_SERVICE_ACCOUNT&#125;</span>
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Deploy to Cloud Run
+  script: |
+    gcloud run deploy ${_SERVICE_NAME} \\
+      --image ${_IMAGE_NAME}:latest \\
+      --region ${LOCATION} \\
+      --platform managed \\
+      --allow-unauthenticated \\
+      --set-secrets=SECRET_KEY_BASE=DEV_SECRET_KEY_BASE:latest \\
+      --set-secrets=PGHOST=DB_HOST:latest \\
+      --set-secrets=PGUSER=DB_USER:latest \\
+      --set-secrets=PGPASSWORD=DB_PASS:latest \\
+      --set-env-vars=PGDATABASE=${_DATABASE_NAME} \\
+      --add-cloudsql-instances=${_INSTANCE_CONNECTION_NAME} \\
+      --service-account=${_SERVICE_ACCOUNT}
 
-<span style={blue}>availableSecrets</span>:
-  <span style={blue}>secretManager</span>:
-  - <span style={orange}>versionName: {dbUserSecretPath}/versions/latest</span>
-    <span style={blue}>env</span>: <span style={orange}>'PGUSER'</span>
-  - <span style={orange}>versionName: {dbPassSecretPath}/versions/latest</span>
-    <span style={blue}>env</span>: <span style={orange}>'PGPASSWORD'</span>
+availableSecrets:
+  secretManager:
+  - versionName:\ {{{dbUserSecretPath}}}/versions/latest
+    env: 'PGUSER'
+  - versionName:\ {{{dbPassSecretPath}}}/versions/latest
+    env: 'PGPASSWORD'
 
-<span style={blue}>images</span>:
-  - <span style={orange}>$&#123;_IMAGE_NAME&#125;:latest</span>
+images:
+  - ${_IMAGE_NAME}:latest
 
-<span style={blue}>options</span>:
-  <span style={blue}>automapSubstitutions</span>: <span style={blue}>true</span>
-  <span style={blue}>logging</span>: <span style={orange}>CLOUD_LOGGING_ONLY</span>
+options:
+  automapSubstitutions: true
+  logging: CLOUD_LOGGING_ONLY
 
-<span style={blue}>substitutions</span>:
-  <span style={blue}>_DATABASE_NAME</span>: <span style={orange}>{dbName}</span>
-  <span style={blue}>_IMAGE_NAME</span>: <span style={orange}>{registryUrl}/{compiledAppName}</span>
-  <span style={blue}>_INSTANCE_CONNECTION_NAME</span>: <span style={orange}>{connectionName}</span>
-  <span style={blue}>_SERVICE_ACCOUNT</span>: <span style={orange}>{serviceAccountEmail}</span>
-  <span style={blue}>_SERVICE_NAME</span>: <span style={orange}>{serviceName}</span>
-</code></pre>
+substitutions:
+  _DATABASE_NAME:\ {{{dbName}}}
+  _IMAGE_NAME:\ {{{registryUrl}}}/{{{compiledAppName}}}
+  _INSTANCE_CONNECTION_NAME:\ {{{connectionName}}}
+  _SERVICE_ACCOUNT:\ {{{serviceAccountEmail}}}
+  _SERVICE_NAME:\ {{{serviceName}}}
+```
 
 Notes:
 
@@ -517,7 +543,9 @@ gcloud auth application-default login
 
 Start the proxy using our `connectionName`. The port must not already be in use.
 
-<pre><code><span style={yellow}>./cloud-sql-proxy</span><span style={blue}> --port</span><span style="color:#B5CEA8"> 54321</span><span style={orange}> {connectionName}</span></code></pre>
+```shell
+./cloud-sql-proxy --port 54321 {{{connectionName}}}
+```
 
 If successful you will see see output similar to:
 
@@ -528,7 +556,9 @@ Listening on 127.0.0.1:54321
 
 Now we can psql in!
 
-<pre><code><span style={yellow}>psql</span><span style={orange}> host="127.0.0.1 port=54321 sslmode=disable user={dbUser} dbname={dbName}"</span></code></pre>
+```shell
+psql host="127.0.0.1 port=54321 sslmode=disable user={{{dbUser}}} dbname={{{dbName}}}"
+```
 
 <style>
   input[type=text] {
