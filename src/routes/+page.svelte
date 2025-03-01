@@ -19,7 +19,7 @@
 		<div class="hidden text-sm font-semibold md:flex">Published</div>
 		<div class="hidden text-sm font-semibold md:flex">Updated</div>
 
-		{#each data.posts as { title, slug, datePublished, dateUpdated }}
+		{#each data.posts as { title, slug, datePublished, dateUpdated } (slug)}
 			<div class="text-lg font-semibold tracking-tight">
 				<a href={`/writing/${slug}`} class="hover:underline">{title}</a>
 			</div>
