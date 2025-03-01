@@ -21,7 +21,6 @@ export const load: PageLoad = async ({ params }) => {
 		if (e instanceof Error) {
 			error(404, e.message);
 		} else {
-			// eslint-disable-next-line no-console
 			console.log('Unknown error: ', e);
 			error(404, `Could not find ${params.slug}`);
 		}
@@ -29,11 +28,9 @@ export const load: PageLoad = async ({ params }) => {
 };
 
 export const entries: EntryGenerator = async () => {
-	// eslint-disable-next-line no-console
 	console.log('Prerendering /writing/[slug]');
 	const posts = await getPosts();
 	const entries = posts.map((post) => ({ slug: post.slug }));
-	// eslint-disable-next-line no-console
 	console.dir(entries, { colors: true });
 
 	return entries;

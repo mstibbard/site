@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { siteConfig } from '$lib/config';
 	import '../app.css';
 
@@ -8,10 +8,10 @@
 
 	// Set title & description from page `load` functions, otherwise default to config values
 	let title = $derived(
-		$page.data.meta?.title ? `${$page.data.meta.title} | ${siteConfig.name}` : siteConfig.name
+		page.data.meta?.title ? `${page.data.meta.title} | ${siteConfig.name}` : siteConfig.name
 	);
 	let description = $derived(
-		$page.data.meta?.description ? $page.data.meta.description : siteConfig.description
+		page.data.meta?.description ? page.data.meta.description : siteConfig.description
 	);
 </script>
 
@@ -22,13 +22,13 @@
 	<meta property="og:type" content="website" />
 	<meta name="og:title" content={title} />
 	<meta name="og:description" content={description} />
-	<meta property="og:url" content={`${$page.url}`} />
+	<meta property="og:url" content={`${page.url}`} />
 	<meta property="twitter:title" content={title} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:creator" content={siteConfig.twitterHandle} />
-	<meta property="twitter:url" content={`${$page.url}`} />
-	<link rel="canonical" href={`${$page.url}`} />
+	<meta property="twitter:url" content={`${page.url}`} />
+	<link rel="canonical" href={`${page.url}`} />
 	{#if !dev}
 		<script defer data-domain="stibbard.io" src="https://plausible.io/js/plausible.js"></script>
 	{/if}
